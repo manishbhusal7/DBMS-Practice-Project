@@ -1,0 +1,37 @@
+[project]
+name = "todolist"
+version = "0.0.1"
+description = "A Terminal User Interface (TUI) and interacitve REPL shell for a todolist app"
+authors = [
+    {name = "Jeremy Castagno", email="JeremyBYU@gmail.com"}
+]
+requires-python= ">=3.9"
+dependencies = [
+    "sqlmodel",
+    "textual[dev]",
+    "click",
+    "click-shell"
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+todo-create-db= "todolist.db:create_db_and_tables" # this command will create our database for us
+todo-repl = "todolist.repl.shell:cli" # this will launch the repl
+todo-tui = "todolist.tui.app:main" # this will launch the tui
+
+[build-system]
+requires = [
+    "setuptools >= 35.0.2",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+todolist = ["*.db"]
+
+[tool.pytest.ini_options]
+addopts = "-rPx -v"
+testpaths = [
+    "tests"
+]

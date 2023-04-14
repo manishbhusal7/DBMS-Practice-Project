@@ -1,0 +1,93 @@
+Select {
+    background: dodgerblue 20%;
+    color: $text;
+    padding: 0 2;
+    border: tall dodgerblue;
+    height: 1;
+    outline: solid dodgerblue;
+    min-height: 1;
+}
+
+Select:focus {
+    border: tall $accent;
+}
+
+#sidebar {
+    dock: left;
+    width: 25;
+    padding-top: 1;
+    height: 100%;
+}
+
+#worklists-container {
+    background: dodgerblue 20%;
+    padding-top: 1;
+    padding-left: 1;
+    padding-right: 1;
+    padding-bottom: 1;
+    outline: solid dodgerblue;
+    content-align: center middle;
+    height:90%;
+}
+
+#worklists-container-sub {
+    height:90%;
+}
+
+#task-item-container {
+    height:93%;
+}
+
+.worklist-item {
+    height: 3;
+    width: 90%;
+    content-align: center middle;
+}
+
+.worklist-item-button {
+    height: 3;
+    width: 10%;
+    content-align: left middle;
+}
+
+#right-section {
+    padding-bottom: 1;
+}
+
+#task-input {
+    align-vertical: bottom;
+}
+
+
+TaskItem {
+    layout: horizontal;
+    background: $boost;
+    height: 5;
+    margin: 1;
+    min-width: 50;
+    padding: 1;
+}
+
+.task-words {
+    content-align: left middle;
+    height: 3;
+    width: 5fr;
+}
+
+.task-date {
+    content-align: center middle;
+    height: 3;
+    width: 1fr;
+}
+
+.task-checkbox {
+    content-align: right middle;
+    height: 3;
+    width: 1fr;
+}
+
+.task-checkbox {
+    content-align: right middle;
+    height: 3;
+    width: 1fr;
+}
