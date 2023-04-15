@@ -19,6 +19,10 @@ Select:focus {
     height: 100%;
 }
 
+#sidebar-vertical {
+    height: 100%;
+}
+
 #worklists-container {
     background: dodgerblue 20%;
     padding-top: 1;
@@ -31,11 +35,11 @@ Select:focus {
 }
 
 #worklists-container-sub {
-    height:90%;
+    height:92%;
 }
 
 #task-item-container {
-    height:93%;
+    height:90%;
 }
 
 .worklist-item {
