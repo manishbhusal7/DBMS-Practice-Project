@@ -2,61 +2,22 @@
 from dataclasses import dataclass, field
 from typing import Optional, List
 from enum import Enum, auto
-from prompt_toolkit import prompt
 from prompt_toolkit import PromptSession
 from sqlmodel import SQLModel
-from rich.console import Console
-from rich.table import Table
-from rich.theme import Theme
 
-from todolist.db import User, Worklist, Task, get_users, get_worklists, get_tasks 
+from todolist.db import User, Worklist, Task, get_users, get_worklists, get_tasks, create_worklist, create_task, get_entity, update_entity
+from .console import console
+from .helper import get_item, show_table_and_ask_for_command, Command
 
+class Step(Enum):
+    select_user = auto()
+    select_worklist = auto()
+    select_task = auto()
 
-custom_theme = Theme({
-    "info": "bold cyan",
-    "warning": "magenta",
-    "danger": "bold red",
-    "success": "bold green"
-})
-console = Console(theme=custom_theme)
-
-def bp(question: str, suffix:str = ' > '):
-    return f"{question}{suffix}"
-
-def create_table_from_schema(item_class:SQLModel, items:List, title:str=None):
-    # get the schema for this model
-    schema = item_class.schema()
-    title = title if title else schema['title']
-    fields = schema['properties']
-    field_ids = list(fields.keys())
-    # create the table
-    table = Table(title=title)
-    # create the table header
-    for _, props in fields.items():
-        no_wrap = False if props['type'] == 'string' else True
-        table.add_column(props["title"], justify="left", style="cyan", no_wrap=no_wrap)
-    # create the table rows
-    for item in items:
-        field_values = [str(getattr(item, field_id)) for field_id in field_ids]
-        table.add_row(*field_values)
-    # return our table
-    return table
-
-def get_item(id, item_list, key="id"):
-    for item in item_list:
-        if int(id) == getattr(item, key):
-            return item
-    return None
-
-
-class AppStep(Enum):
-    SELECT_USER = auto()
-    SELECT_WORKLIST = auto()
-    SELECT_TASKLIST = auto()
 
 @dataclass
 class AppState():
-    app_step:AppStep = AppStep.SELECT_USER
+    app_step:Step = Step.select_user
     all_user_list: List[User] = field(default_factory=list)
     all_worklist_list: List[Worklist] = field(default_factory=list)
     all_tasklist_list: List[Task] = field(default_factory=list)
@@ -81,32 +42,62 @@ class AppState():
 
     def set_active_worklist(self, id:int):
         self.active_worklist = get_item(id, self.all_worklist_list)
-        self.refresh_task_list()
+        self.refresh_tasklist_list()
 
-def select_user(session:PromptSession, state:AppState):
-    console.print(create_table_from_schema(User, state.all_user_list))
-    response = session.prompt(bp("Choose an action and user, e.g. 'select 1'"))
-    action, value = response.split(" ")
-    if action.lower() == 'select':
-        state.set_active_user(value)
-        state.app_step = AppStep.SELECT_WORKLIST
+def execute_command(session:PromptSession, state:AppState, state_key:str, model:SQLModel):
+    
+    response = show_table_and_ask_for_command(session, state, state_key, model)
+    if len(response.split(' ')) < 2:
+        # user wants to quit
+        if response == Command.quit:
+            return False # return false to make the program exit
+        # user just entered a bad command
+        # warn them and then loop again
+        console.print("[danger]You must type in a command and a value: Eg. 'select 1'")
+        return True
+
+    command, value = response.split(' ', 1)
+    command = command.lower()
+    if command == Command.select:
+        if model == User:
+            state.set_active_user(value)
+            state.app_step = Step.select_worklist
+        elif model == Worklist:
+            state.set_active_worklist(value)
+            state.app_step = Step.select_task
+    elif command == Command.remove:
+        if model == User:
+            console.print("[warning]Not supported currently")
+        elif model == Worklist:
+            console.print("[warning]Not supported currently")
+        else:
+            console.print("[warning]Not supported currently")
+    elif command == Command.complete:
+        if model == Task:
+            task:Task = get_entity(Task, int(value))
+            task.completed = not task.completed
+            update_entity(task)
+            state.refresh_tasklist_list()
+        else:
+            console.print("[danger]Not supported")
+    elif command == Command.add:
+        if model == Task:
+            create_task(task=value, worklist_id=state.active_worklist.id)
+            state.refresh_tasklist_list()
+        elif model == Worklist:
+            create_worklist(name=value, user_id=state.active_user.id)
+            state.refresh_worklist_list()
+        else:
+            console.print("[danger]Not supported")
+    elif command == Command.reset:
+        if value == "worklist":
+            state.app_step = Step.select_worklist
+        elif value == "user":
+            state.app_step = Step.select_user
     else:
-        console.print("[danger]Not supported!")
+        console.print("[danger]Unknown command")
 
-def select_worklist(session:PromptSession, state:AppState):
-    console.print(create_table_from_schema(Worklist, state.all_worklist_list))
-    response = session.prompt(bp("Choose an action and a worklist, e.g. 'select 1' or 'add priority' or 'delete 1'"))
-    action, value = response.split(" ")
-    if action.lower() == 'select':
-        state.set_active_worklist(value)
-        state.app_step = AppStep.SELECT_WORKLIST
-    else:
-        console.print("[danger]Not supported!")
-
-def select_task(session:PromptSession, state:AppState):
-    console.print(create_table_from_schema(Task, state.all_tasklist_list))
-    worklist_id = session.prompt(bp("Choose a task to mark as done"))
-    state.set_active_worklist(worklist_id)
+    return True
 
 def cli():
 
@@ -114,25 +105,23 @@ def cli():
     session = PromptSession()
 
     console.print("You can exit the program by pressing [success]CTRL+D[/success] at anytime")
-    console.print("Select a choice by the [info]number[/info] presented in the prior table")
+    console.print("You must type in a command and a value: Eg. 'select 1', 'complete 1'")
     console.print()
-    
-    while True:
+    loop = True
+    while loop:
         try:
-            if state.app_step == AppStep.SELECT_USER:
-                select_user(session, state)
-            elif state.app_step == AppStep.SELECT_WORKLIST:
-                select_worklist(session, state)
-            elif state.app_step == AppStep.SELECT_TASKLIST:
-                select_task(session, state)
-
-
+            if state.app_step == Step.select_user:
+                loop = execute_command(session, state, 'all_user_list', model=User)
+            elif state.app_step == Step.select_worklist:
+                loop = execute_command(session, state, 'all_worklist_list', model=Worklist)
+            elif state.app_step == Step.select_task:
+                loop = execute_command(session, state, 'all_tasklist_list', model=Task)
         except KeyboardInterrupt:
             continue
         except EOFError:
             break
         except Exception:
-            console.print("\n[danger]Error! Read instructions carefully[/danger]\n")
+            console.print_exception()
             
     print('GoodBye!')
 

@@ -105,6 +105,11 @@ def update_entity(entity):
         session.refresh(entity)
     return entity
 
+def get_entity(model:SQLModel, id):
+    with Session(engine) as session:
+        entity = session.get(model, id)
+        return entity
+
 def delete_entity(entity):
     with Session(engine) as session:
         session.delete(entity)
