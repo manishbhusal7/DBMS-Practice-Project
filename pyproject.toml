@@ -10,7 +10,8 @@ dependencies = [
     "sqlmodel",
     "textual[dev]",
     "click",
-    "click-shell"
+    "click-shell",
+    "prompt_toolkit"
 ]
 
 [project.optional-dependencies]
@@ -18,7 +19,7 @@ dev = ["pytest"]
 
 [project.scripts]
 todo-create-db= "todolist.db:create_db_and_tables" # this command will create our database for us
-todo-repl = "todolist.repl.shell:cli" # this will launch the repl
+todo-repl = "todolist.repl.app:cli" # this will launch the repl
 todo-tui = "todolist.tui.app:main" # this will launch the tui
 
 [build-system]

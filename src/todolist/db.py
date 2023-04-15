@@ -1,6 +1,6 @@
 import pathlib
 from datetime import date
-from typing import Optional  # 
+from typing import Optional, List  # 
 
 from sqlmodel import Field, SQLModel, create_engine, Column, Integer, ForeignKey, Session
 
@@ -86,7 +86,7 @@ def delete_item(item):
         session.delete(item)
         session.commit()
 
-def get_users():
+def get_users() -> List[User]:
     with Session(engine) as session:
         return list(session.query(User).all())
     
