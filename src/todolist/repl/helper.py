@@ -6,6 +6,16 @@ from rich.table import Table
 
 from .console import console
 
+class EntityNotFound(Exception):
+    def __init__(self, id, model:SQLModel):
+        message = f"id={id} not found in {model.schema()['title']} table"        
+        super().__init__(message)
+        self.id = id
+        self.model = model
+        self.message = message
+    def __str__(self):
+        return f"[danger]EntityNotFound[/danger]: {self.message}"
+
 class Command(str, Enum):
     select = 'select'
     remove = 'remove'
@@ -27,11 +37,12 @@ def generate_completer(items):
         })
     return completer
 
-def get_item(id, item_list, key="id"):
+def get_item(id, item_list, key="id", model:SQLModel=SQLModel):
     for item in item_list:
         if int(id) == getattr(item, key):
             return item
-    return None
+    raise EntityNotFound(id, model)
+
 
 def bp(question: str, suffix:str = ' > '):
     return f"{question}{suffix}"

@@ -81,11 +81,6 @@ def create_task(task:str, date_created:str=None, completed:bool=False, worklist_
 
     return task
 
-def delete_item(item):
-    with Session(engine) as session:
-        session.delete(item)
-        session.commit()
-
 def get_users() -> List[User]:
     with Session(engine) as session:
         return list(session.query(User).all())

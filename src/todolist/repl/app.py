@@ -5,9 +5,12 @@ from enum import Enum, auto
 from prompt_toolkit import PromptSession
 from sqlmodel import SQLModel
 
-from todolist.db import User, Worklist, Task, get_users, get_worklists, get_tasks, create_worklist, create_task, get_entity, update_entity
+from todolist.db import (User, Worklist, Task, 
+                         get_users, get_worklists, get_tasks, 
+                         create_worklist, create_task, get_entity, 
+                         update_entity, delete_entity)
 from .console import console
-from .helper import get_item, show_table_and_ask_for_command, Command
+from .helper import get_item, show_table_and_ask_for_command, Command, EntityNotFound
 
 class Step(Enum):
     select_user = auto()
@@ -31,17 +34,23 @@ class AppState():
         self.all_user_list = get_users()
 
     def refresh_worklist_list(self):
-        self.all_worklist_list = get_worklists(self.active_user.id)
+        if self.active_user is not None:
+            self.all_worklist_list = get_worklists(self.active_user.id)
+        else:
+            self.all_worklist_list = []
 
     def refresh_tasklist_list(self):
-        self.all_tasklist_list = get_tasks(self.active_worklist.id)
+        if self.active_worklist is not None:
+            self.all_tasklist_list = get_tasks(self.active_worklist.id)
+        else:
+            self.all_tasklist_list = []
 
     def set_active_user(self, id:int):
-        self.active_user = get_item(id, self.all_user_list)
+        self.active_user = get_item(id, self.all_user_list, model=User)
         self.refresh_worklist_list()
 
     def set_active_worklist(self, id:int):
-        self.active_worklist = get_item(id, self.all_worklist_list)
+        self.active_worklist = get_item(id, self.all_worklist_list, model=Worklist)
         self.refresh_tasklist_list()
 
 def execute_command(session:PromptSession, state:AppState, state_key:str, model:SQLModel):
@@ -69,24 +78,24 @@ def execute_command(session:PromptSession, state:AppState, state_key:str, model:
         if model == User:
             console.print("[warning]Not supported currently")
         elif model == Worklist:
-            console.print("[warning]Not supported currently")
+            if state.active_worklist is not None and state.active_worklist.id == int(value):
+                state.active_worklist = None
+                state.app_step = Step.select_worklist
+            delete_entity(get_entity(Worklist, int(value)))
         else:
-            console.print("[warning]Not supported currently")
+            delete_entity(get_entity(Task, int(value)))
     elif command == Command.complete:
         if model == Task:
             task:Task = get_entity(Task, int(value))
             task.completed = not task.completed
             update_entity(task)
-            state.refresh_tasklist_list()
         else:
             console.print("[danger]Not supported")
     elif command == Command.add:
         if model == Task:
             create_task(task=value, worklist_id=state.active_worklist.id)
-            state.refresh_tasklist_list()
         elif model == Worklist:
             create_worklist(name=value, user_id=state.active_user.id)
-            state.refresh_worklist_list()
         else:
             console.print("[danger]Not supported")
     elif command == Command.reset:
@@ -96,7 +105,10 @@ def execute_command(session:PromptSession, state:AppState, state_key:str, model:
             state.app_step = Step.select_user
     else:
         console.print("[danger]Unknown command")
-
+    if state.active_user:
+        state.refresh_worklist_list()
+    if state.active_worklist:
+        state.refresh_tasklist_list()
     return True
 
 def cli():
@@ -120,6 +132,8 @@ def cli():
             continue
         except EOFError:
             break
+        except EntityNotFound as e:
+            console.print(f"{e}\n")
         except Exception:
             console.print_exception()
             
