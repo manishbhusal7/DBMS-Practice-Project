@@ -15,7 +15,7 @@ Welcome to the `todolist` app! This app is for demonstration purposes to showcas
 Just type in `pip install -e .`
 ## Running the Demo
 
-There are three (3) applications we created to interact with our terminal. Open up your terminal/shell and type one of the following commands:
+There are three (3) applications we created to interact with our database. Open up your terminal/shell and type one of the following commands:
 
 1. `todo-create-db` - This will create the database for us. This must be executed at least one time before any other command. The database will be stored in `src/todolist/database/database.db`
 2. `todo-repl` - This will launch the **repl** app. You will issue commands by entering them into the repl.
@@ -108,12 +108,12 @@ SELECT *
 FROM user
 ```
 
-However, the ORM allows us to this all within Python and it wil now return a list of User objects. 
+However, the ORM allows us to do this all within Python (and the ORM handles writing SQL). This function will return a list of User objects (the rows in our table).
 
 
 ### repl
 
-The repl is created using prompt-toolkit. The main application is under the file `app.py`. The files `console.py` and `helper.py` provide function and objects that the main `app.py` uses.
+The repl is created using prompt-toolkit. The main application is under the file `app.py`. The files `console.py` and `helper.py` provide function and objects that the help `app.py`.
 
 Here is the main loop of our app:
 
