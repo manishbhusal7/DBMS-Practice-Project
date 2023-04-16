@@ -1,46 +1,40 @@
-Select {
-    background: dodgerblue 20%;
-    color: $text;
-    padding: 0 2;
-    border: tall dodgerblue;
-    height: 1;
-    outline: solid dodgerblue;
-    min-height: 1;
-}
-
-Select:focus {
-    border: tall $accent;
-}
-
-#sidebar {
-    dock: left;
-    width: 25;
-    padding-top: 1;
-    height: 100%;
+#app-grid {
+    layout: grid;
+    grid-size: 2;
+    grid-columns: 25 1fr; /* 25 character, remaining fractional */
+    grid-rows: 1fr;
 }
 
 #sidebar-vertical {
     height: 100%;
+    background: $panel;
+    border: dodgerblue;
 }
 
-#worklists-container {
-    background: dodgerblue 20%;
-    padding-top: 1;
-    padding-left: 1;
-    padding-right: 1;
-    padding-bottom: 1;
-    outline: solid dodgerblue;
-    content-align: center middle;
-    height:90%;
+#right-section {
+    width: 100%;
+    height: 100%;
+    background: $panel;
+    border: dodgerblue;
+}
+
+#user-list-widget {
+    height:1;
 }
 
 #worklists-container-sub {
-    height:92%;
+    height: 1fr;
+    margin: 1;
+}
+
+#worklist-input {
+    height: 1;
 }
 
 #task-item-container {
-    height:90%;
+    height: 1fr;
 }
+
 
 .worklist-item {
     height: 3;
@@ -50,16 +44,7 @@ Select:focus {
 
 .worklist-item-button {
     height: 3;
-    width: 10%;
     content-align: left middle;
-}
-
-#right-section {
-    padding-bottom: 1;
-}
-
-#task-input {
-    align-vertical: bottom;
 }
 
 

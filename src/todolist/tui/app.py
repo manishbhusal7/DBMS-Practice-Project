@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.containers import Vertical, Horizontal
+from textual.containers import Vertical, Horizontal, Container
 from textual.reactive import reactive
 from textual.widgets import (
     Button,
@@ -12,12 +12,9 @@ from textual.widgets import (
     ListView,
     Input,
 )
-from textual.widget import Widget
-from textual import events
 from todolist.db import (
     Task,
     Worklist,
-    User,
     create_task,
     create_worklist,
     get_users,
@@ -84,36 +81,17 @@ class Worklists(ListView):
         self.index = cache_index if cache_index is not None else 0
     
     def on_button_pressed(self, message:Button.Pressed):
+        """Called when the delete button is pressed on a worklist"""
         worklist = message.button.name
         self.worklists.remove(worklist) # remove the old task
         self.worklists = self.worklists # this causes an update on the parent
         if len(self.worklists) == 0:
             tasklist_widget: TaskItems = self.parent.parent.parent.parent.parent.query_one("#task-items")
-            tasklist_widget.tasks =  get_tasks(self.worklist_id)
-            # NEED TO UPDATE RIGHT PANE
+            tasklist_widget.tasks =  [] # change to zero
         delete_entity(worklist) # delete from database
+        self.refresh(layout=True)
 
 
-class Sidebar(Widget):
-    user_name_list = reactive([])
-
-    def __init__(self, user_name_list=[], *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.user_name_list = user_name_list
-
-    def compose(self) -> ComposeResult:
-        """Create child ListView inside sidebar"""
-        with Vertical(id="sidebar-vertical"):
-            yield Select(
-                items=self.user_name_list,
-                placeholder="Select user ...",
-                list_mount="#sidebar-vertical",
-                id="user-list-widget",
-            )
-            with Vertical(id="worklists-container"):
-                with Vertical(id="worklists-container-sub"):
-                    yield Worklists(id="worklists")
-                yield Input(placeholder="New Worklist", id="worklist-input")
 class TodoListApp(App):
     """A Textual app to manage a todo list."""
 
@@ -133,20 +111,35 @@ class TodoListApp(App):
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
-        yield Sidebar(
-            user_name_list=self.user_name_list,
-            id="sidebar",
-        )
-        with Vertical(id="right-section"):
-            with Vertical(id="task-item-container"):
-                yield TaskItems(id="task-items")
-            yield Input(placeholder="New Task", id="task-input")
+
         yield Header()
+        # Main App
+        with Container(id="app-grid"):
+            # Left Sidebar
+            with Container(id='sidebar-vertical'):
+                # user dropdown selection
+                yield Select(
+                    items=self.user_name_list,
+                    placeholder="Select user ...",
+                    list_mount="#sidebar-vertical",
+                    id="user-list-widget",
+                )
+                # Worklists
+                with Vertical(id='worklists-container-sub'):
+                    yield Worklists(id="worklists")
+                # Input to add a new worklist
+                yield Input(placeholder="New Worklist", id="worklist-input")
+            # Right Section
+            with Vertical(id='right-section'):
+                # All the task items
+                with Vertical(id="task-item-container"):
+                    yield TaskItems(id="task-items")
+                # input to add a new task item
+                yield Input(placeholder="New Task", id="task-input")
         yield Footer()
 
     def on_input_submitted(self, message):
-        """This function is called anytime there is a user enters text in an input widget
-        Currently is used for 
+        """This function is called anytime a user enters text in an input widget
         """
         if message.input.id == "task-input":
             task = create_task(message.value, worklist_id=self.worklist_id)
@@ -166,6 +159,7 @@ class TodoListApp(App):
         self.dark = not self.dark
 
     def update_worklist_widget(self):
+        """This will ensure the work list is updated and refreshed"""
         # Update the GUI and the worklist widget
         worklists = get_worklists(self.user.id) # get worklist from database
         worklists_widget: ListView = self.query_one("#worklists") 
