@@ -148,9 +148,17 @@ def cli():
 
 The basic idea is we have a while loop that repeatedly asks for commands. We execute those commands (which are often reading or writing to the database) and loop again.
 
+Here is a screenshot of the interface:
+
+![](./assets/repl-demo.png)
+
 ### tui
 
 This folder contains all the code for the tui interface. The main app is inside the file `app.py`. All the *styles* of the app, which configure how the app *looks*, are in `style.css`. This is a much more advanced interface than the `repl` interface.
+
+Here is a screenshot of the interface:
+
+![](./assets/tui-demo.png)
 
 
 
