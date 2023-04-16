@@ -13,14 +13,14 @@ from .console import console
 from .helper import get_item, show_table_and_ask_for_command, Command, EntityNotFound
 
 class Step(Enum):
-    select_user = auto()
-    select_worklist = auto()
-    select_task = auto()
+    show_user = auto()
+    show_worklist = auto()
+    show_task = auto()
 
 
 @dataclass
 class AppState():
-    app_step:Step = Step.select_user
+    app_step:Step = Step.show_user
     all_user_list: List[User] = field(default_factory=list)
     all_worklist_list: List[Worklist] = field(default_factory=list)
     all_tasklist_list: List[Task] = field(default_factory=list)
@@ -70,17 +70,17 @@ def execute_command(session:PromptSession, state:AppState, state_key:str, model:
     if command == Command.select:
         if model == User:
             state.set_active_user(value)
-            state.app_step = Step.select_worklist
+            state.app_step = Step.show_worklist
         elif model == Worklist:
             state.set_active_worklist(value)
-            state.app_step = Step.select_task
+            state.app_step = Step.show_task
     elif command == Command.remove:
         if model == User:
             console.print("[warning]Not supported currently")
         elif model == Worklist:
             if state.active_worklist is not None and state.active_worklist.id == int(value):
                 state.active_worklist = None
-                state.app_step = Step.select_worklist
+                state.app_step = Step.show_worklist
             delete_entity(get_entity(Worklist, int(value)))
         else:
             delete_entity(get_entity(Task, int(value)))
@@ -100,9 +100,9 @@ def execute_command(session:PromptSession, state:AppState, state_key:str, model:
             console.print("[danger]Not supported")
     elif command == Command.reset:
         if value == "worklist":
-            state.app_step = Step.select_worklist
+            state.app_step = Step.show_worklist
         elif value == "user":
-            state.app_step = Step.select_user
+            state.app_step = Step.show_user
     else:
         console.print("[danger]Unknown command")
     if state.active_user:
@@ -112,9 +112,8 @@ def execute_command(session:PromptSession, state:AppState, state_key:str, model:
     return True
 
 def cli():
-
-    state = AppState()
-    session = PromptSession()
+    state = AppState() # contains our app sate
+    session = PromptSession() # allows us to prompt the user
 
     console.print("You can exit the program by pressing [success]CTRL+D[/success] at anytime")
     console.print("You must type in a command and a value: Eg. 'select 1', 'complete 1'")
@@ -122,11 +121,11 @@ def cli():
     loop = True
     while loop:
         try:
-            if state.app_step == Step.select_user:
+            if state.app_step == Step.show_user:
                 loop = execute_command(session, state, 'all_user_list', model=User)
-            elif state.app_step == Step.select_worklist:
+            elif state.app_step == Step.show_worklist:
                 loop = execute_command(session, state, 'all_worklist_list', model=Worklist)
-            elif state.app_step == Step.select_task:
+            elif state.app_step == Step.show_task:
                 loop = execute_command(session, state, 'all_tasklist_list', model=Task)
         except KeyboardInterrupt:
             continue
@@ -137,7 +136,7 @@ def cli():
         except Exception:
             console.print_exception()
             
-    print('GoodBye!')
+    console.print('GoodBye!')
 
 
 if __name__ == '__main__':
