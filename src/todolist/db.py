@@ -122,6 +122,8 @@ def create_db_and_tables():  #
     SQLModel.metadata.create_all(engine)  # 
     create_fake_data()
 
+
+
 # Create tables and fake data by: python -m todolist.db
 if __name__ == "__main__":  # 
     create_db_and_tables()  # 

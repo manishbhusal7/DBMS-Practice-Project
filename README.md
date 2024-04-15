@@ -12,7 +12,8 @@ Welcome to the `todolist` app! This app is for demonstration purposes to showcas
 
 ## Installation
 
-Just type in `pip install -e .`
+Just type in `pip install -e .` inside the **shell** tab.
+
 ## Running the Demo
 
 There are three (3) applications we created to interact with our database. Open up your terminal/shell and type one of the following commands:
